@@ -10,19 +10,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        include:
-          - os: windows-latest
-            platform: win32
-            arch: x64
-          - os: macos-latest
-            platform: darwin
-            arch: x64
-
-    runs-on: ${{ matrix.os }}
-
+  build-windows:
+    runs-on: windows-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -36,18 +25,42 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build React app
-        run: npm run build
-
-      - name: Compile Electron TypeScript
-        run: npm run electron:compile
-
-      - name: Package Electron app
-        run: npx electron-packager . "English Speaking Practice" --platform=${{ matrix.platform }} --arch=${{ matrix.arch }} --out=release --overwrite
+      - name: Build and Package
+        run: npm run electron:build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: English-Speaking-Practice-${{ matrix.platform }}-${{ matrix.arch }}
-          path: release/
+          name: English-Speaking-Practice-Windows
+          path: release/win-unpacked/
+          retention-days: 30
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and Package
+        run: npm run electron:build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: English-Speaking-Practice-macOS
+          path: release/mac*/
           retention-days: 30

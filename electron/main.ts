@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, session, systemPreferences } from 'electron'
 import path from 'path'
 
 // app.isPackaged is false when running with electron ., true when running packaged app
@@ -38,7 +38,43 @@ function createWindow() {
   })
 }
 
-app.whenReady().then(() => {
+// 미디어 권한 요청 처리
+function setupMediaPermissions() {
+  // 마이크/카메라 권한 자동 허용
+  session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
+    const allowedPermissions = ['media', 'mediaKeySystem', 'geolocation', 'notifications', 'fullscreen']
+    if (allowedPermissions.includes(permission)) {
+      callback(true)
+    } else {
+      callback(false)
+    }
+  })
+
+  // 미디어 디바이스 권한 체크 핸들러
+  session.defaultSession.setPermissionCheckHandler((webContents, permission, requestingOrigin) => {
+    const allowedPermissions = ['media', 'mediaKeySystem', 'geolocation', 'notifications', 'fullscreen']
+    return allowedPermissions.includes(permission)
+  })
+}
+
+// macOS 마이크 권한 요청
+async function requestMicrophoneAccess() {
+  if (process.platform === 'darwin') {
+    const status = systemPreferences.getMediaAccessStatus('microphone')
+    if (status !== 'granted') {
+      const granted = await systemPreferences.askForMediaAccess('microphone')
+      console.log('Microphone access:', granted ? 'granted' : 'denied')
+    }
+  }
+}
+
+app.whenReady().then(async () => {
+  // 미디어 권한 설정
+  setupMediaPermissions()
+
+  // macOS 마이크 권한 요청
+  await requestMicrophoneAccess()
+
   createWindow()
 
   app.on('activate', () => {

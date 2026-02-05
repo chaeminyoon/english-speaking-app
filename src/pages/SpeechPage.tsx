@@ -58,10 +58,33 @@ export default function SpeechPage() {
 
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      // First, enumerate available devices
+      const devices = await navigator.mediaDevices.enumerateDevices()
+      const audioInputs = devices.filter((d) => d.kind === 'audioinput')
+      console.log('Available audio inputs:', audioInputs.map((d) => ({ deviceId: d.deviceId, label: d.label })))
+
+      if (audioInputs.length === 0) {
+        alert('No microphone found. Please connect a microphone and try again.')
+        return
+      }
+
+      // Try with default device first, then fallback to any audio
+      let stream: MediaStream
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        })
+      } catch (firstError) {
+        console.log('First attempt failed, trying with basic audio constraint:', firstError)
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      }
 
       // Debug: Log available tracks
-      console.log('Audio tracks:', stream.getAudioTracks().map(t => ({ label: t.label, enabled: t.enabled, muted: t.muted })))
+      console.log('Audio tracks:', stream.getAudioTracks().map((t) => ({ label: t.label, enabled: t.enabled, muted: t.muted })))
 
       // Use supported MIME type
       const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
@@ -115,7 +138,17 @@ export default function SpeechPage() {
       }, 1000)
     } catch (error) {
       console.error('Failed to start recording:', error)
-      alert('Microphone access denied. Please allow microphone access to record.')
+      if (error instanceof Error) {
+        if (error.name === 'NotFoundError') {
+          alert('No microphone device found. Please check your microphone connection.')
+        } else if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+          alert('Microphone access denied. Please allow microphone access in your system settings.')
+        } else {
+          alert(`Microphone error: ${error.message}`)
+        }
+      } else {
+        alert('Failed to access microphone. Please check your settings.')
+      }
     }
   }
 

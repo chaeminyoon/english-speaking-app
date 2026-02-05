@@ -52,9 +52,17 @@ export interface AIFeedback {
   createdAt: Date
 }
 
+// AI Provider 타입
+export type AIProvider = 'openai' | 'claude' | 'gemini' | 'ollama'
+
 // 앱 설정 타입
 export interface AppSettings {
+  aiProvider: AIProvider
   openaiApiKey?: string
+  claudeApiKey?: string
+  geminiApiKey?: string
+  ollamaBaseUrl?: string
+  selectedModel?: string
   theme: 'light' | 'dark'
   language: 'ko' | 'en'
 }

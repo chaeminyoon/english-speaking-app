@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { simplifyEnglish as simplifyEnglishAPI } from '../services/openai'
+import { simplifyEnglish as simplifyEnglishAPI } from '../services/ai'
 import { useSettingsStore } from '../stores/settingsStore'
 
 interface UseSimplifyEnglishReturn {
@@ -14,12 +14,13 @@ export function useSimplifyEnglish(): UseSimplifyEnglishReturn {
   const [simplifiedText, setSimplifiedText] = useState<string | null>(null)
   const [isSimplifying, setIsSimplifying] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { openaiApiKey } = useSettingsStore()
+  const { aiProvider, getCurrentApiKey } = useSettingsStore()
 
   const simplify = useCallback(
     async (text: string): Promise<string | null> => {
-      if (!openaiApiKey) {
-        setError('OpenAI API key is not configured. Please set it in Settings.')
+      const apiKey = getCurrentApiKey()
+      if (aiProvider !== 'ollama' && !apiKey) {
+        setError(`API key for ${aiProvider} is not configured. Please set it in Settings.`)
         return null
       }
 
@@ -43,7 +44,7 @@ export function useSimplifyEnglish(): UseSimplifyEnglishReturn {
         setIsSimplifying(false)
       }
     },
-    [openaiApiKey]
+    [aiProvider, getCurrentApiKey]
   )
 
   const clear = useCallback(() => {

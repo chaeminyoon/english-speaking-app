@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { transcribeAudio } from '../services/openai'
+import { transcribeAudio } from '../services/ai'
 import { useSettingsStore } from '../stores/settingsStore'
 
 interface UseSpeechToTextReturn {

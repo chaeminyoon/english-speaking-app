@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { generateSpeechFeedback } from '../services/openai'
+import { generateSpeechFeedback } from '../services/ai'
 import { useSettingsStore } from '../stores/settingsStore'
 
 interface Feedback {
@@ -20,12 +20,13 @@ export function useAIFeedback(): UseAIFeedbackReturn {
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { openaiApiKey } = useSettingsStore()
+  const { aiProvider, getCurrentApiKey } = useSettingsStore()
 
   const generateFeedback = useCallback(
     async (transcript: string, topic: string): Promise<Feedback | null> => {
-      if (!openaiApiKey) {
-        setError('OpenAI API key is not configured. Please set it in Settings.')
+      const apiKey = getCurrentApiKey()
+      if (aiProvider !== 'ollama' && !apiKey) {
+        setError(`API key for ${aiProvider} is not configured. Please set it in Settings.`)
         return null
       }
 
@@ -49,7 +50,7 @@ export function useAIFeedback(): UseAIFeedbackReturn {
         setIsGenerating(false)
       }
     },
-    [openaiApiKey]
+    [aiProvider, getCurrentApiKey]
   )
 
   const clearFeedback = useCallback(() => {

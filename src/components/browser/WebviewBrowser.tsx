@@ -185,6 +185,9 @@ export default function WebviewBrowser({
           className="absolute inset-0 w-full h-full"
           // @ts-expect-error - webview attributes
           allowpopups="true"
+          useragent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+          partition="persist:webview"
+          webpreferences="contextIsolation=no, nodeIntegration=no"
         />
       </div>
     </div>
